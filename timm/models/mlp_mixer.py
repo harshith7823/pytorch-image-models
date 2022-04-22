@@ -288,8 +288,8 @@ class MlpMixer(nn.Module):
                 act_layer=act_layer, drop=drop_rate, drop_path=drop_path_rate)
             for _ in range(num_blocks)])
         """
-        self.norm = norm_layer(embed_dim)
-        self.head = nn.Linear(embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
+        self.blocks_norm = norm_layer(embed_dim)
+        self.blocks_head = nn.Linear(embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
         self.final_head = nn.Sequential(
             # nn.Linear(embed_dim, self.num_classes),
             # nn.ReLU(),
@@ -325,18 +325,20 @@ class MlpMixer(nn.Module):
         #print("In_Model")
         x = self.blocks(x)
         #print(x)
-        x = self.norm(x)
+        x = self.blocks_norm(x)
         #print(x)
         x = x.mean(dim=1)
         #print(x)
         return x
 
     def forward(self, x):
+        print(x.shape)
         x = self.initial_fc(x)
-        x = nn.ReLU(x)
+        print(x.shape)
+        #x = nn.ReLU(x)
         x = torch.reshape(x, (196, 768))
         x = self.forward_features(x)
-        x = self.head(x)
+        x = self.blocks_head(x)
         x = self.final_head(x)
         #print(x)
         #x = self.sigmoid(x)

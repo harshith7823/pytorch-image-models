@@ -667,11 +667,18 @@ def train_one_epoch(
         epoch, model, loader, optimizer, loss_fn, args,
         lr_scheduler=None, saver=None, output_dir=None, amp_autocast=suppress,
         loss_scaler=None, model_ema=None, mixup_fn=None):
+    
+    #model.forward_features.weight.requires_grad=False
+    for name, param in model.named_parameters():
+        if param.requires_grad and 'blocks' in name:
+            param.requires_grad = False
+            print("Freezed=", name, param)
+            #amed_params.append(name)
+        else:
+            print("Unfreezed=", name, param)
+    
+    print(model)
 
-    for param in model.forward_features.parameters():
-        param.requires_grad=False
-
-    print(model)    
     if args.mixup_off_epoch and epoch >= args.mixup_off_epoch:
         if args.prefetcher and loader.mixup_enabled:
             loader.mixup_enabled = False
