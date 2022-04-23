@@ -6,7 +6,7 @@ import torch
 
 class TextDataset(Dataset):
 
-    def __init__(self, dir_path, , split):
+    def __init__(self, dir_path, split):
         
         self.split = split
         self.path = dir_path
