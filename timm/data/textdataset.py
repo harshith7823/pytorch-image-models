@@ -1,13 +1,14 @@
-
+from torch.utils.data import Dataset, DataLoader
 import os
 from os import listdir
 from os.path import isfile, join
 import torch
 
-class TextDataset():
+class TextDataset(Dataset):
 
-    def __init__(self, dir_path):
+    def __init__(self, dir_path, , split):
         
+        self.split = split
         self.path = dir_path
         self.len = 0
         self.filesize =[]
@@ -26,7 +27,7 @@ class TextDataset():
 
         t = 0 
         interested_file = ""
-
+        
         for file in self.filesize:
             if file[0] < (idx + 1):             
                 continue
@@ -41,7 +42,6 @@ class TextDataset():
                 ans = content[idx - (t - len(content))]
             features =  list(map(float, (ans.strip("\n").split())))
             return torch.tensor(features), torch.tensor(0 if "Normal" in interested_file else 1)
-
         else:
             return "Error"
 
