@@ -1,67 +1,60 @@
-from torch.utils.data import Dataset, DataLoader
+
 import os
+from os import listdir
+from os.path import isfile, join
 import torch
-import glob
-import numpy as np
 
+class TextDataset():
 
-class TextDataset(Dataset):
-    def __init__(self, dir_path, split):
+    def __init__(self, dir_path):
+        
         self.path = dir_path
-        self.split = split
+        self.len = 0
+        self.filesize =[]
+
+        onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]       
+        for file in onlyfiles:
+            with open(self.path+file, 'r') as fp:   
+                c = fp.readlines()  
+                self.len += len(c)
+                self.filesize.append((self.len, file))
 
     def __len__(self):
-        count = 0
-        for root_dir, cur_dir, files in os.walk(self.path):
-            count += len(files)
-        #print('file count:', count)
-        count = count*32
-        return count
+        return self.len
 
     def __getitem__(self, idx):
-        # index sequentially as per file list
 
-        # Go to file idx//32
-        # Get label(1x1) based on file name
-        # Get vector(1x4096) at idx%32 in the file
-        #return a tensor x*y (x*y = 4096) and target tensor (1,) //Use x,y = 16,256
+        t = 0 
+        interested_file = ""
 
-        #print("idx=", idx)
-        def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
-            file_dir_extension = os.path.join(AllVideos_Path, '*.txt')
-            for f in glob.glob(file_dir_extension):
-                if not f.startswith('.'):
-                    yield os.path.basename(f)
+        for file in self.filesize:
+            if file[0] < (idx + 1):             
+                continue
+            else:
+                t = file[0]
+                interested_file = file[1]
+                break
 
-        All_Videos = sorted(listdir_nohidden(self.path))
-        #print(self.path)
-        #print(len(All_Videos))
-        All_Videos.sort()
-        #print(All_Videos)
-        VideoPath = os.path.join(self.path, All_Videos[idx//32])
-        #print(VideoPath)
-        f = open(VideoPath, "r")
-        feat = idx%32
-        words = f.read().split()
-        features = np.float32(words[feat * 4096:feat * 4096 + 4096])
-        features = torch.tensor(features)
-        #print(features.shape)
-        if len(features) == 0:
-            print(idx)
-            print(VideoPath)
-        features = torch.reshape(features, (16, 256))
-        # features = torch.reshape(features, (196, 768))
-        #features = torch.reshape(features, (1, 4096))
-        #print(VideoPath)
-        if VideoPath.find('Normal') == -1:
-            label = 0
+        if len(interested_file) and t != 0:
+            with open(self.path+interested_file, 'r') as fp:
+                content = fp.readlines()
+                ans = content[idx - (t - len(content))]
+            features =  list(map(float, (ans.strip("\n").split())))
+            return torch.tensor(features), torch.tensor(0 if "Normal" in interested_file else 1)
+
         else:
-            label = 1
+            return "Error"
 
-        label = torch.tensor(label)
-        #print(features.shape)
-        #print(features)
-        #print(label.shape)
-        #print(label)
+# t = TextDataset("/Users/harshithg/Desktop/DL/Avg/")
+# print(t.__len__())
+# print(t.__getitem__(25+179))
+# print(t.__getitem__(525))
 
-        return features, label
+
+
+
+
+
+
+
+
