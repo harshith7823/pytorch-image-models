@@ -3,6 +3,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import torch
+import numpy as np
 
 class TextDataset(Dataset):
 
@@ -40,16 +41,16 @@ class TextDataset(Dataset):
             with open(self.path+"/"+interested_file, 'r') as fp:
                 content = fp.readlines()
                 ans = content[idx - (t - len(content))]
-            features =  list(map(float, (ans.strip("\n").split())))
+            features =  list(map(float, (ans.strip("\n").split())))            
+            features = np.reshape(np.array(features), (16, 256))
             return torch.tensor(features), torch.tensor(0 if "Normal" in interested_file else 1)
         else:
             return "Error"
 
-# t = TextDataset("/Users/harshithg/Desktop/DL/Avg/")
+# t = TextDataset("/Users/harshithg/Desktop/DL/delete", "")
 # print(t.__len__())
-# print(t.__getitem__(25+179))
+# print(t.__getitem__(0))
 # print(t.__getitem__(525))
-
 
 
 
