@@ -15,7 +15,7 @@ class TextDataset(Dataset):
 
         onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]       
         for file in onlyfiles:
-            with open(self.path+file, 'r') as fp:   
+            with open(self.path+"/"+file, 'r') as fp:   
                 c = fp.readlines()  
                 self.len += len(c)
                 self.filesize.append((self.len, file))
@@ -37,7 +37,7 @@ class TextDataset(Dataset):
                 break
 
         if len(interested_file) and t != 0:
-            with open(self.path+interested_file, 'r') as fp:
+            with open(self.path+"/"+interested_file, 'r') as fp:
                 content = fp.readlines()
                 ans = content[idx - (t - len(content))]
             features =  list(map(float, (ans.strip("\n").split())))
