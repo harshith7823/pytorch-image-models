@@ -240,6 +240,12 @@ class SpatialGatingBlock(nn.Module):
         x = x + self.drop_path(self.mlp_channels(self.norm(x)))
         return x
 
+class View(nn.Module):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def forward(self, x):
+        return x.view(*self.shape)
 
 class MlpMixer(nn.Module):
 
@@ -266,8 +272,23 @@ class MlpMixer(nn.Module):
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         
         ##initial_fc and stem not needed
-        self.initial_fc =nn.Linear(4096, 150528)
-        
+        #self.initial_fc =nn.Linear(4096, 150528)
+        # self.initial_fc = nn.Sequential(
+        #     nn.Linear(4096, 4096*3),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.3),
+        #     nn.Linear(4096*3, 4096*9),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.3),
+        #     nn.Linear(4096*9, 4096*27),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.3),
+        #     nn.Linear(4096*27, 150528)
+        # )
+        #self.rs = nn.View((1,196,768))
+
+        self.us = nn.Upsample(scale_factor=36.75, mode='nearest')
+
         #self.stem = PatchEmbed(
         #    img_size=img_size, patch_size=patch_size, in_chans=in_chans,
         #    embed_dim=embed_dim, norm_layer=norm_layer if stem_norm else None)
@@ -313,7 +334,7 @@ class MlpMixer(nn.Module):
     # def init_weights(self, nlhb=False):
     #     head_bias = -math.log(self.num_classes) if nlhb else 0.
     #     named_apply(partial(_init_weights, head_bias=head_bias), module=self)  # depth-first
-    def init_weights(m):
+    def init_weights(self, m):
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform(m.weight)
             m.bias.data.fill_(0.01)
@@ -337,11 +358,18 @@ class MlpMixer(nn.Module):
         return x
 
     def forward(self, x):
-        print(x.shape)
-        x = self.initial_fc(x)
-        print(x.shape)
+        #print("Initial:",x.shape)
+        #x = self.initial_fc(x)
+        x = self.us(x)
+        #print("After FC:",x.shape)
         #x = nn.ReLU(x)
-        x = torch.reshape(x, (196, 768))
+        ##TODO: Use batch size variable
+        #x = torch.Tensor.reshape(x, (1, 196, 768))
+        bs = x.size()[0]
+        x = x.view((bs, 196, 768))
+        #x = x.view((32, 196, 768))
+        #x = self.rs(x)
+        #print("Reshape:",x.shape)
         x = self.forward_features(x)
         x = self.blocks_head(x)
         x = self.final_head(x)

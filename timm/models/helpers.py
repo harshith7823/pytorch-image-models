@@ -190,14 +190,14 @@ def load_pretrained(model, default_cfg=None, num_classes=1000, in_chans=3, filte
     elif hf_hub_id and has_hf_hub(necessary=True):
         _logger.info(f'Loading pretrained weights from Hugging Face hub ({hf_hub_id})')
         state_dict = load_state_dict_from_hf(hf_hub_id)
-    print("pretrain state_dict:")
-    print(type(state_dict))
-    print(len(state_dict))
+    #print("pretrain state_dict:")
+    #print(type(state_dict))
+    #print(len(state_dict))
     for key in list(state_dict.keys()):
         if key.startswith('stem'):
             del state_dict[key]
-    for param_tensor in state_dict:
-        print(param_tensor, "\t", state_dict[param_tensor].size())
+    #for param_tensor in state_dict:
+    #    print(param_tensor, "\t", state_dict[param_tensor].size())
     
     if filter_fn is not None:
         # for backwards compat with filter fn that take one arg, try one first, the two

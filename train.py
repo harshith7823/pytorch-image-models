@@ -672,12 +672,11 @@ def train_one_epoch(
     for name, param in model.named_parameters():
         if param.requires_grad and 'blocks' in name:
             param.requires_grad = False
-            print("Freezed=", name, param)
-            #amed_params.append(name)
-        else:
-            print("Unfreezed=", name, param)
+            #print("Freezed=", name)
+        #else:
+            #print("Unfreezed=", name)
     
-    print(model)
+    #print(model)
 
     if args.mixup_off_epoch and epoch >= args.mixup_off_epoch:
         if args.prefetcher and loader.mixup_enabled:
@@ -698,7 +697,7 @@ def train_one_epoch(
     last_idx = len(loader) - 1
     num_updates = epoch * len(loader)
     for batch_idx, (input, target) in enumerate(loader):
-        print("batch=", batch_idx)
+        #print("batch=", batch_idx)
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
         if not args.prefetcher:
