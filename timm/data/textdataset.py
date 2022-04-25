@@ -42,7 +42,7 @@ class TextDataset(Dataset):
                 content = fp.readlines()
                 ans = content[idx - (t - len(content))]
             features =  list(map(float, (ans.strip("\n").split())))            
-            features = np.reshape(np.array(features), (16, 256))
+            features = np.reshape(np.array(features), (16, 256)).tolist()
             return torch.tensor(features), torch.tensor(0 if "Normal" in interested_file else 1)
         else:
             return "Error"
