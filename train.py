@@ -561,6 +561,7 @@ def main():
     
     loader_eval = create_loader(
         dataset_eval,
+        custom_sampler = True,
         input_size=data_config['input_size'],
         batch_size=args.validation_batch_size or args.batch_size,
         is_training=False,
@@ -594,7 +595,11 @@ def main():
     else:
         train_loss_fn = nn.CrossEntropyLoss()
     train_loss_fn = train_loss_fn.cuda()
-    validate_loss_fn = nn.CrossEntropyLoss().cuda()
+    if args.mil_loss:
+        validate_loss_fn = MilRankingLoss()
+        validate_loss_fn = validate_loss_fn.cuda()
+    else:
+        validate_loss_fn = nn.CrossEntropyLoss().cuda()
 
     # setup checkpoint saver and eval metric tracking
     eval_metric = args.eval_metric
@@ -826,9 +831,9 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
             print("output =", output)
             print("target=", target)
             loss = loss_fn(output, target)
-            print("eval_loss=", loss)
+            #print("eval_loss=", loss)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
-            print("eval_acc1=", acc1)
+            #print("eval_acc1=", acc1)
 
             if args.distributed:
                 reduced_loss = reduce_tensor(loss.data, args.world_size)

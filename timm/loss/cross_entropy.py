@@ -23,6 +23,8 @@ class LabelSmoothingCrossEntropy(nn.Module):
         nll_loss = nll_loss.squeeze(1)
         smooth_loss = -logprobs.mean(dim=-1)
         loss = self.confidence * nll_loss + self.smoothing * smooth_loss
+        print(type(loss))
+        print(loss)
         return loss.mean()
 
 

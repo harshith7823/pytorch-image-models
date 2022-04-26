@@ -1,0 +1,1 @@
+python train.py --model mixer_b16_224_miil_in21k --pretrained --epochs 1 -b 64 -d embeddings  --no-prefetcher --mil-loss --output "./output" /home/gcheerla/DL_data

@@ -208,10 +208,11 @@ def create_loader(
 
     sampler = None
     print("dataset_len=", len(dataset))
+    print(dataset)
     print(custom_sampler)
-    #if custom_sampler:
-    #    sampler = BagSampler(dataset)
-    if distributed and not isinstance(dataset, torch.utils.data.IterableDataset):
+    if custom_sampler:
+        sampler = BagSampler(dataset)
+    elif distributed and not isinstance(dataset, torch.utils.data.IterableDataset):
         if is_training:
             if num_aug_repeats:
                 sampler = RepeatAugSampler(dataset, num_repeats=num_aug_repeats)
@@ -231,7 +232,7 @@ def create_loader(
     if use_multi_epochs_loader:
         loader_class = MultiEpochsDataLoader
 
-    print(loader_class)
+    print(sampler)
     loader_args = dict(
         batch_size=batch_size,
         shuffle=not isinstance(dataset, torch.utils.data.IterableDataset) and sampler is None and is_training,

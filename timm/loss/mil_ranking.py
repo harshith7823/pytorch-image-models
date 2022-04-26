@@ -11,7 +11,39 @@ class MilRankingLoss(nn.Module):
     #def mil_ranking(y_true, y_pred):
     def forward(self, y_pred, y_true):
         'Custom Objective function'
+        print("true=",y_true)
+        print("pred=",y_pred)
 
+        y_true = torch.flatten(y_true)
+        y_pred = torch.flatten(y_pred)
+        
+        #y_true = y_true.tolist()
+        #y_pred = y_pred.tolist()
+        lt = len(y_true)
+        lp = len(y_pred)
+        #print(y_true)
+        #print(lt)
+        #print(y_pred)
+        #print(lp)
+        anamoly_bag = y_pred[:lp//2]
+        normal_bag = y_pred[lp//2:]
+
+        max_an = max(anamoly_bag)
+        max_norm = max(normal_bag)
+        temporal_smooth = 0
+        
+        for i in range(len(anamoly_bag)-1):
+            temporal_smooth += (anamoly_bag[i] - anamoly_bag[i+1])**2
+        sparsity = sum(anamoly_bag)
+        lamda_1 = 0.00008
+        lamda_2 = 0.00008
+
+        loss = max(0, 1-max_an+max_norm) + lamda_1*temporal_smooth + lamda_2*sparsity
+
+        #loss = torch.tensor(loss)
+        print("mil_loss=", loss)
+        return loss
+        """
         y_true = torch.flatten(y_true)
         y_pred = torch.flatten(y_pred)
         print("MIL_Ranking")
@@ -94,3 +126,4 @@ class MilRankingLoss(nn.Module):
         z = torch.mean(z, axis=-1) +  0.00008*torch.sum(sub_sum_l1) + 0.00008*torch.sum(sub_l2)  # Final Loss f
 
         return z
+        """

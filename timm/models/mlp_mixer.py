@@ -324,7 +324,7 @@ class MlpMixer(nn.Module):
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Dropout(p=0.3),
-            nn.Linear(256, 2)
+            nn.Linear(256, 1)
         )
         #self.sigmoid = nn.Sigmoid()
         self.sm = nn.Softmax(dim=1)
@@ -376,7 +376,7 @@ class MlpMixer(nn.Module):
         #print(x)
         #x = self.sigmoid(x)
         #print(x)
-        x = self.sm(x)
+        #x = self.sm(x)
         return x
 
 
