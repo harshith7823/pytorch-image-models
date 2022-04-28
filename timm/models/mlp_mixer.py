@@ -54,7 +54,7 @@ from .registry import register_model
 def _cfg(url='', **kwargs):
     return {
         'url': url,
-        'num_classes': 1000, 'input_size': (3, 224, 224), 'pool_size': None,
+        'num_classes': 2, 'input_size': (3, 224, 224), 'pool_size': None,
         'crop_pct': 0.875, 'interpolation': 'bicubic', 'fixed_input_size': True,
         'mean': (0.5, 0.5, 0.5), 'std': (0.5, 0.5, 0.5),
         'first_conv': 'stem.proj', 'classifier': 'head',
@@ -64,23 +64,9 @@ def _cfg(url='', **kwargs):
 
 default_cfgs = dict(
     mixer_s32_224=_cfg(num_classes=2),
-    mixer_s16_224=_cfg(),
-    mixer_b32_224=_cfg(),
-    mixer_b16_224=_cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_mixer_b16_224-76587d61.pth',
-    ),
-    mixer_b16_224_in21k=_cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_mixer_b16_224_in21k-617b3de2.pth',
-        num_classes=21843
-    ),
-    mixer_l32_224=_cfg(),
-    mixer_l16_224=_cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_mixer_l16_224-92f9adc4.pth',
-    ),
-    mixer_l16_224_in21k=_cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_mixer_l16_224_in21k-846aa33c.pth',
-        num_classes=21843
-    ),
+    mixer_b32_224=_cfg(num_classes=2),    
+    mixer_l32_224=_cfg(num_classes=2),
+    
 
     # Mixer ImageNet-21K-P pretraining
     mixer_b16_224_miil_in21k=_cfg(
@@ -423,42 +409,13 @@ def mixer_s32_224(pretrained=False, **kwargs):
 
 
 @register_model
-def mixer_s16_224(pretrained=False, **kwargs):
-    """ Mixer-S/16 224x224
-    Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
-    """
-    model_args = dict(patch_size=16, num_blocks=8, embed_dim=512, **kwargs)
-    model = _create_mixer('mixer_s16_224', pretrained=pretrained, **model_args)
-    return model
-
-
-@register_model
 def mixer_b32_224(pretrained=False, **kwargs):
     """ Mixer-B/32 224x224
     Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
     """
-    model_args = dict(patch_size=32, num_blocks=12, embed_dim=768, **kwargs)
+    # model_args = dict(patch_size=32, num_blocks=12, embed_dim=768, **kwargs)
+    model_args = dict(patch_size=16, num_blocks=12, embed_dim=256, **kwargs)
     model = _create_mixer('mixer_b32_224', pretrained=pretrained, **model_args)
-    return model
-
-
-@register_model
-def mixer_b16_224(pretrained=False, **kwargs):
-    """ Mixer-B/16 224x224. ImageNet-1k pretrained weights.
-    Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
-    """
-    model_args = dict(patch_size=16, num_blocks=12, embed_dim=768, **kwargs)
-    model = _create_mixer('mixer_b16_224', pretrained=pretrained, **model_args)
-    return model
-
-
-@register_model
-def mixer_b16_224_in21k(pretrained=False, **kwargs):
-    """ Mixer-B/16 224x224. ImageNet-21k pretrained weights.
-    Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
-    """
-    model_args = dict(patch_size=16, num_blocks=12, embed_dim=768, **kwargs)
-    model = _create_mixer('mixer_b16_224_in21k', pretrained=pretrained, **model_args)
     return model
 
 
@@ -467,30 +424,10 @@ def mixer_l32_224(pretrained=False, **kwargs):
     """ Mixer-L/32 224x224.
     Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
     """
-    model_args = dict(patch_size=32, num_blocks=24, embed_dim=1024, **kwargs)
+    # model_args = dict(patch_size=32, num_blocks=24, embed_dim=1024, **kwargs)
+    model_args = dict(patch_size=16, num_blocks=24, embed_dim=256, **kwargs)
     model = _create_mixer('mixer_l32_224', pretrained=pretrained, **model_args)
     return model
-
-
-@register_model
-def mixer_l16_224(pretrained=False, **kwargs):
-    """ Mixer-L/16 224x224. ImageNet-1k pretrained weights.
-    Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
-    """
-    model_args = dict(patch_size=16, num_blocks=24, embed_dim=1024, **kwargs)
-    model = _create_mixer('mixer_l16_224', pretrained=pretrained, **model_args)
-    return model
-
-
-@register_model
-def mixer_l16_224_in21k(pretrained=False, **kwargs):
-    """ Mixer-L/16 224x224. ImageNet-21k pretrained weights.
-    Paper:  'MLP-Mixer: An all-MLP Architecture for Vision' - https://arxiv.org/abs/2105.01601
-    """
-    model_args = dict(patch_size=16, num_blocks=24, embed_dim=1024, **kwargs)
-    model = _create_mixer('mixer_l16_224_in21k', pretrained=pretrained, **model_args)
-    return model
-
 
 @register_model
 def mixer_b16_224_miil(pretrained=False, **kwargs):

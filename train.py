@@ -480,6 +480,8 @@ def main():
 
     # setup learning rate schedule and starting epoch
     lr_scheduler, num_epochs = create_scheduler(args, optimizer)
+    #TODO
+    num_epochs = 10
     start_epoch = 0
     if args.start_epoch is not None:
         # a specified start_epoch will always override the resume epoch
@@ -813,8 +815,16 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
                 output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
                 target = target[0:target.size(0):reduce_factor]
 
-            print("output =", output)
-            print("target=", target)
+            with open("./predicted.txt", "a") as fp:
+                np_arr = output.tolist()
+                fp.write(str(np_arr)+"\n")
+            print("output =", output.shape)
+
+            with open("./actual.txt", "a") as fp:
+                np_arr = target.tolist()
+                fp.write(str(np_arr)+"\n")
+            print("target=", target.shape)
+
             loss = loss_fn(output, target)
             print("eval_loss=", loss)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
