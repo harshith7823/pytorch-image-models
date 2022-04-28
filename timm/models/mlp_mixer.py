@@ -326,7 +326,7 @@ class MlpMixer(nn.Module):
             nn.Dropout(p=0.3),
             nn.Linear(256, 1)
         )
-        #self.sigmoid = nn.Sigmoid()
+        self.sigmoid = nn.Sigmoid()
         self.sm = nn.Softmax(dim=1)
         # self.init_weights(nlhb=nlhb)
         self.apply(self.init_weights)
@@ -373,8 +373,9 @@ class MlpMixer(nn.Module):
         x = self.forward_features(x)
         x = self.blocks_head(x)
         x = self.final_head(x)
+        
         #print(x)
-        #x = self.sigmoid(x)
+        x = self.sigmoid(x)
         #print(x)
         #x = self.sm(x)
         return x

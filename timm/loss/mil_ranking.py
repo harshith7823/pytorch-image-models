@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import Counter
 
 class MilRankingLoss(nn.Module):
     def __init__(self):
@@ -11,11 +12,17 @@ class MilRankingLoss(nn.Module):
     #def mil_ranking(y_true, y_pred):
     def forward(self, y_pred, y_true):
         'Custom Objective function'
-        print("true=",y_true)
-        print("pred=",y_pred)
+        #print("true=",y_true)
 
         y_true = torch.flatten(y_true)
         y_pred = torch.flatten(y_pred)
+
+        print("True shape=", y_true.shape)
+        print("Pred shape=",y_pred.shape)
+
+        true_list = y_true.tolist()
+        print("True_Counts=", Counter(true_list))
+        print("pred=",y_pred)
         
         #y_true = y_true.tolist()
         #y_pred = y_pred.tolist()
