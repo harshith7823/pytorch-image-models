@@ -507,6 +507,12 @@ def main():
         download=args.dataset_download,
         batch_size=args.batch_size)
 
+    dataset_test = create_dataset(
+        args.dataset, root=args.data_dir, split="test", is_training=False,
+        class_map=args.class_map,
+        download=args.dataset_download,
+        batch_size=args.batch_size)
+
     # setup mixup / cutmix
     collate_fn = None
     mixup_fn = None
@@ -563,6 +569,21 @@ def main():
     
     loader_eval = create_loader(
         dataset_eval,
+        input_size=data_config['input_size'],
+        batch_size=args.validation_batch_size or args.batch_size,
+        is_training=False,
+        use_prefetcher=args.prefetcher,
+        interpolation=data_config['interpolation'],
+        mean=data_config['mean'],
+        std=data_config['std'],
+        num_workers=args.workers,
+        distributed=args.distributed,
+        crop_pct=data_config['crop_pct'],
+        pin_memory=args.pin_mem,
+    )
+
+    loader_test = create_loader(
+        dataset_test,
         input_size=data_config['input_size'],
         batch_size=args.validation_batch_size or args.batch_size,
         is_training=False,
@@ -664,6 +685,7 @@ def main():
     if best_metric is not None:
         _logger.info('*** Best metric: {0} (epoch {1})'.format(best_metric, best_epoch))
 
+    test(model, loader_test, validate_loss_fn, args, amp_autocast=amp_autocast)
 
 def train_one_epoch(
         epoch, model, loader, optimizer, loss_fn, args,
@@ -700,16 +722,8 @@ def train_one_epoch(
             input = input.contiguous(memory_format=torch.channels_last)
 
         with amp_autocast():
-            #print(model)
-            print(input.shape)
             output = model(input)
-            print(output.shape)
-            print(target.shape)
-            #print(output)
-            #print(target)
-            print(loss_fn)
-            loss = loss_fn(output, target)
-            print("loss=", loss)
+            loss = loss_fn(output, target)            
 
         if not args.distributed:
             losses_m.update(loss.item(), input.size(0))
@@ -783,14 +797,13 @@ def train_one_epoch(
 
     return OrderedDict([('loss', losses_m.avg)])
 
-
-def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix=''):
+def test(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix=''):
     batch_time_m = AverageMeter()
     losses_m = AverageMeter()
     top1_m = AverageMeter()
     top5_m = AverageMeter()
 
-    print("------Validating-------")
+    print("------Testing-------")
     model.eval()
 
     end = time.time()
@@ -818,18 +831,13 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
             with open("./predicted.txt", "a") as fp:
                 np_arr = output.tolist()
                 fp.write(str(np_arr)+"\n")
-            print("output =", output.shape)
 
             with open("./actual.txt", "a") as fp:
                 np_arr = target.tolist()
                 fp.write(str(np_arr)+"\n")
-            print("target=", target.shape)
 
             loss = loss_fn(output, target)
-            print("eval_loss=", loss)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
-            print("eval_acc1=", acc1)
-
             if args.distributed:
                 reduced_loss = reduce_tensor(loss.data, args.world_size)
                 acc1 = reduce_tensor(acc1, args.world_size)
@@ -858,6 +866,67 @@ def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix='')
 
     metrics = OrderedDict([('loss', losses_m.avg), ('top1', top1_m.avg), ('top5', top5_m.avg)])
 
+    return metrics
+
+
+def validate(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix=''):
+    batch_time_m = AverageMeter()
+    losses_m = AverageMeter()
+    top1_m = AverageMeter()
+
+    print("------Validating-------")
+    model.eval()
+
+    end = time.time()
+    last_idx = len(loader) - 1
+    with torch.no_grad():
+        for batch_idx, (input, target) in enumerate(loader):
+            last_batch = batch_idx == last_idx
+            if not args.prefetcher:
+                input = input.cuda()
+                target = target.cuda()
+            if args.channels_last:
+                input = input.contiguous(memory_format=torch.channels_last)
+
+            with amp_autocast():
+                output = model(input)
+            if isinstance(output, (tuple, list)):
+                output = output[0]
+
+            # augmentation reduction
+            reduce_factor = args.tta
+            if reduce_factor > 1:
+                output = output.unfold(0, reduce_factor, reduce_factor).mean(dim=2)
+                target = target[0:target.size(0):reduce_factor]
+
+            loss = loss_fn(output, target)            
+            acc1 = accuracy(output, target)
+            if args.distributed:
+                reduced_loss = reduce_tensor(loss.data, args.world_size)
+                acc1 = reduce_tensor(acc1, args.world_size)
+                acc5 = reduce_tensor(acc5, args.world_size)
+            else:
+                reduced_loss = loss.data
+
+            torch.cuda.synchronize()
+
+            losses_m.update(reduced_loss.item(), input.size(0))
+            top1_m.update(acc1.item(), output.size(0))
+
+            batch_time_m.update(time.time() - end)
+            end = time.time()
+            if args.local_rank == 0 and (last_batch or batch_idx % args.log_interval == 0):
+                log_name = 'Test' + log_suffix
+                _logger.info(
+                    '{0}: [{1:>4d}/{2}]  '
+                    'Time: {batch_time.val:.3f} ({batch_time.avg:.3f})  '
+                    'Loss: {loss.val:>7.4f} ({loss.avg:>6.4f})  '
+                    'Acc@1: {top1.val:>7.4f} ({top1.avg:>7.4f})  '
+                        .format(
+                        log_name, batch_idx, last_idx, batch_time=batch_time_m,
+                        loss=losses_m, top1=top1_m))
+
+    metrics = OrderedDict([('loss', losses_m.avg), ('top1', top1_m.avg)])
     return metrics
 
 
