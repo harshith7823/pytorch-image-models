@@ -18,8 +18,11 @@ class BagSampler(Sampler):
             self.final_indices.extend(self.first_half_indices[i*32:i*32+32])
             self.final_indices.extend(self.second_half_indices[i*32:i*32+32])
         
-        print(self.final_indices)
+        
         print(len(self.final_indices))
+        print(self.final_indices[:32])
+        print(self.final_indices[32:64])
+        
         return iter(self.final_indices)
         #return iter(self.first_half_indices + self.second_half_indices)
     

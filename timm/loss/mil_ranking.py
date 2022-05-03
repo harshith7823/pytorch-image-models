@@ -22,7 +22,7 @@ class MilRankingLoss(nn.Module):
 
         true_list = y_true.tolist()
         print("True_Counts=", Counter(true_list))
-        print("pred=",y_pred)
+        #print("pred=",y_pred)
         
         #y_true = y_true.tolist()
         #y_pred = y_pred.tolist()
@@ -35,6 +35,8 @@ class MilRankingLoss(nn.Module):
         anamoly_bag = y_pred[:lp//2]
         normal_bag = y_pred[lp//2:]
 
+        print("anamoly bag=", anamoly_bag)
+        print("Normal_bag=", normal_bag)
         max_an = max(anamoly_bag)
         max_norm = max(normal_bag)
         temporal_smooth = 0

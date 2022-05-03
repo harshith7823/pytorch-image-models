@@ -9,6 +9,17 @@ class TextDataset(Dataset):
     def __init__(self, dir_path, split):
         self.path = dir_path
         self.split = split
+        def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
+            file_dir_extension = os.path.join(AllVideos_Path, '*.txt')
+            for f in glob.glob(file_dir_extension):
+                if not f.startswith('.'):
+                    yield os.path.basename(f)
+
+        self.All_Videos = sorted(listdir_nohidden(self.path))
+        #print(self.path)
+        #print("len=", len(All_Videos))
+        self.All_Videos.sort()
+
 
     def __len__(self):
         count = 0
@@ -27,19 +38,10 @@ class TextDataset(Dataset):
         #return a tensor x*y (x*y = 4096) and target tensor (1,) //Use x,y = 16,256
 
         #print("index=",idx)
-        def listdir_nohidden(AllVideos_Path):  # To ignore hidden files
-            file_dir_extension = os.path.join(AllVideos_Path, '*.txt')
-            for f in glob.glob(file_dir_extension):
-                if not f.startswith('.'):
-                    yield os.path.basename(f)
-
-        All_Videos = sorted(listdir_nohidden(self.path))
-        #print(self.path)
-        #print("len=", len(All_Videos))
-        All_Videos.sort()
+        
         #print(All_Videos)
-        VideoPath = os.path.join(self.path, All_Videos[idx//32])
-        #print("video=",VideoPath)
+        VideoPath = os.path.join(self.path, self.All_Videos[idx//32])
+        print("idx=", idx, "video=",VideoPath)
         f = open(VideoPath, "r")
         feat = idx%32
         words = f.read().split()
