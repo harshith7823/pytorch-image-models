@@ -625,6 +625,11 @@ def main():
     best_epoch = None
     saver = None
     output_dir = None
+
+    if args.initial_checkpoint:
+        test(model, loader_test, validate_loss_fn, args, amp_autocast=amp_autocast)
+        return
+
     if args.rank == 0:
         if args.experiment:
             exp_name = args.experiment
@@ -835,9 +840,9 @@ def test(model, loader, loss_fn, args, amp_autocast=suppress, log_suffix=''):
             with open("./actual.txt", "a") as fp:
                 np_arr = target.tolist()
                 fp.write(str(np_arr)+"\n")
+            loss = loss_fn(output, target)            
+            acc1, acc5 = accuracy(output, target, topk=(1, 5))            
 
-            loss = loss_fn(output, target)
-            acc1, acc5 = accuracy(output, target, topk=(1, 5))
             if args.distributed:
                 reduced_loss = reduce_tensor(loss.data, args.world_size)
                 acc1 = reduce_tensor(acc1, args.world_size)
